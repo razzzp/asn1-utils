@@ -1,1 +1,1 @@
-Utilities for reading .DER encoded files
+Utilities for reading .DER encoded files, and compiling asn1 files

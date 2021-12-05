@@ -1,47 +1,27 @@
 from os import error
+from asn1 import *
 import struct
-from typing import ContextManager, List, Tuple
 
-class ASN1Root:
-    def __init__(self, type : str) -> None:
-        self.type = type
-        self.isOptional = True
+# enums ----------
 
-    def asASN1Str(self) -> str:
-        # to be overriden
-        raise NotImplementedError(f'asASN1Str() is not implemented in {self.__class__}')
+# Tag structure
+#   |b8 |b7 |b6  |b5 |b4 |b3 |b2 |b1 |
+#   |class  |type|number             |
+class TagClass:
+    Universal = 0x00
+    Application = 0x40
+    Context_Specific = 0x80
+    Private = 0xc0
 
-    @staticmethod
-    def indentStr(indent):
-        result = ''
-        for i in range (indent):
-            result +='\t'
-        return result
+class TagType:
+    Primitive = 0x00
+    Constructed = 0x20
 
-
-class ASN1Object (ASN1Root):
-    def __init__(self, type : str, value = None) -> None:
-        super().__init__(type)
-        self.value = value
-
-    def asASN1Str(self, indent = 0) -> str:
-        return f'{self.indentStr(indent)}{self.type} ::= {self.value}'
-    
-class ASN1Sequence (ASN1Root):
-    def __init__(self) -> None:
-        super().__init__('sequence')
-        self.children : List[ASN1Root] = []
-
-    def asASN1Str(self, indent = 0) -> str:
-        result = f'{self.indentStr(indent)}{self.type} :: = {{\n'
-        for child in self.children:
-            result += child.asASN1Str(indent+1) + '\n'
-        result += self.indentStr(indent) + '}'
-        return result
+# decoder classes ----
 
 class DERBooleanDecoder:
     #expected tag value
-    TagNum = 1 #0x01
+    TAG_NUM = 1 #0x01
 
     @staticmethod
     def decode(length: int, value : bytes):
@@ -52,17 +32,17 @@ class DERBooleanDecoder:
 
 
 class DERIntegerDecoder:
-    TagNum = 2 #0x02
+    TAG_NUM = 2 #0x02
 
     @staticmethod
     def decode(length: int, value : bytes):
         return ASN1Object('int', int.from_bytes(value,'big'))
 
 class DEREnumDecoder (DERIntegerDecoder):
-    TagNum = 10 #0x0A
+    TAG_NUM = 10 #0x0A
 
 class DERRealValueDecoder:
-    TagNum = 9 #0x09
+    TAG_NUM = 9 #0x09
 
     @staticmethod
     def decode(length : int, value : bytes):
@@ -70,7 +50,7 @@ class DERRealValueDecoder:
         return ASN1Object('real', num)
 
 class DERBitStringDecoder:
-    TagNum = 3 #0x03
+    TAG_NUM = 3 #0x03
 
     @staticmethod
     def decode(length : int,value : bytes):
@@ -78,7 +58,7 @@ class DERBitStringDecoder:
         # TODO
 
 class DEROctetStringDecoder:
-    TagNum = 4 #0x04
+    TAG_NUM = 4 #0x04
 
     @staticmethod
     def decode(length : int, value : bytes):
@@ -86,14 +66,14 @@ class DEROctetStringDecoder:
         return ASN1Object('octet string', str(strVal, 'utf-8'))
 
 class DERNullDecoder:
-    TagNum = 5 #0x05
+    TAG_NUM = 5 #0x05
 
     @staticmethod
     def decode(length : int,value : bytes):
         return ASN1Object('null')
 
 class DERObjectIdentifierDecoder:
-    TagNum = 6 #0x06
+    TAG_NUM = 6 #0x06
 
     @staticmethod
     def decode(length : int, value : bytes):
@@ -102,7 +82,7 @@ class DERObjectIdentifierDecoder:
 class DERSequenceDecoder:
     # class - universal
     # type - constructed 
-    TagNum = 16 #0x10
+    TAG_NUM = 16 #0x10
 
     def __init__(self) -> None:
         self.value = None
@@ -120,22 +100,22 @@ class DERSequenceDecoder:
             decoder = None
 
             # byte at curpos is the tag
-            (tagClass, tagType, tagNumber, curPos) = self._readTag(curPos)
+            (tagClass, tagType, tagNumber, curPos) = self._read_tag(curPos)
 
             # get decoder for tag
             try:
-                decoder = getDERDataDecoder(tagClass, tagType, tagNumber)
+                decoder = get_der_decoder(tagClass, tagType, tagNumber)
             except ValueError as e:
                 print(f'Warning: {e}. Block will be skipped')
 
             print(f'parser: {type(decoder)}')
 
             # get length for current tlv
-            (valLength, curPos) = self._readLength(curPos)
+            (valLength, curPos) = self._read_length(curPos)
 
             # get values
             if valLength:
-                (valueBytes, curPos) = self._readValue(curPos, valLength)
+                (valueBytes, curPos) = self._read_value(curPos, valLength)
                 print(f'value: {valueBytes.hex()}')
 
             if decoder:
@@ -144,7 +124,7 @@ class DERSequenceDecoder:
         #
         return result
 
-    def _readTag(self, index : int) -> tuple:
+    def _read_tag(self, index : int) -> tuple:
         """Reads byte at @index in self.value, and determine the tag of the TLV.
             Tag can be of the extended type
         """
@@ -173,7 +153,7 @@ class DERSequenceDecoder:
         nextIndex = index + 1
         return (tagClass, tagType, tagNum, nextIndex)
 
-    def _readLength(self, index : int) -> tuple:
+    def _read_length(self, index : int) -> tuple:
         """Reads the byte at @index, and determine the length of the TLV.
             Length can be the extended type
         """
@@ -198,7 +178,7 @@ class DERSequenceDecoder:
         
         return (length, nextIndex)
 
-    def _readValue(self, index : int, length : int) -> tuple:
+    def _read_value(self, index : int, length : int) -> tuple:
         """Reads from self.value starting from @index for @length bytes"""
         try:
             t = self.value[index]
@@ -208,72 +188,25 @@ class DERSequenceDecoder:
         value = self.value[index : nextIndex]
         return (value, nextIndex)
 
-# enums ----------
 
-# Tag structure
-#   |b8 |b7 |b6  |b5 |b4 |b3 |b2 |b1 |
-#   |class  |type|number             |
-class TagClass:
-    Universal = 0x00
-    Application = 0x40
-    Context_Specific = 0x80
-    Private = 0xc0
+# static maps
+_primitiveDecoderMapping = {
+    DERBooleanDecoder.TAG_NUM : DERBooleanDecoder(),
+    DERIntegerDecoder.TAG_NUM : DERIntegerDecoder(),
+    DEREnumDecoder.TAG_NUM : DEREnumDecoder(),
+    DERRealValueDecoder.TAG_NUM : DERRealValueDecoder(),
+    DERBitStringDecoder.TAG_NUM : DERBitStringDecoder(),
+    DEROctetStringDecoder.TAG_NUM : DEROctetStringDecoder(),
+    DERNullDecoder.TAG_NUM : DERNullDecoder(),
+    DERObjectIdentifierDecoder.TAG_NUM : DERObjectIdentifierDecoder()
+}
 
-class TagType:
-    Primitive = 0x00
-    Constructed = 0x20
-
-
-# global -----------
-
-def main():
-    print("ASN1 Utils - DER Decoder")
-    #
-    testBytes = getTestData()
-    #
-    parser = DERSequenceDecoder()
-    result = parser.decode(len(testBytes), testBytes)
-    print(f'\nfinal result:')
-    #
-    print(result.asASN1Str())
-
-def getDERDataDecoder(tagClass, tagType, tagNum):
+def get_der_decoder(tagClass, tagType, tagNum):
     print(f'cla: {tagClass}; type: {tagType}; num: {tagNum}')
     if tagClass == TagClass.Universal:
         if tagType == TagType.Primitive:
-           return primitiveDecoderMapping[tagNum]
+           return _primitiveDecoderMapping[tagNum]
         elif tagType == TagType.Constructed:
-            if tagNum == DERSequenceDecoder.TagNum:
+            if tagNum == DERSequenceDecoder.TAG_NUM:
                 return DERSequenceDecoder()
     raise ValueError(f'tag not supported: cla: {tagClass}; type: {tagType}; num: {tagNum}')
-
-primitiveDecoderMapping = {
-    DERBooleanDecoder.TagNum : DERBooleanDecoder(),
-    DERIntegerDecoder.TagNum : DERIntegerDecoder(),
-    DEREnumDecoder.TagNum : DEREnumDecoder(),
-    DERRealValueDecoder.TagNum : DERRealValueDecoder(),
-    DERBitStringDecoder.TagNum : DERBitStringDecoder(),
-    DEROctetStringDecoder.TagNum : DEROctetStringDecoder(),
-    DERNullDecoder.TagNum : DERNullDecoder(),
-    DERObjectIdentifierDecoder.TagNum : DERObjectIdentifierDecoder()
-}
-
-def getTestData() -> bytes:
-    # bool
-    result = b'\x01\x01\x01'
-    # int
-    result += b'\x02\x01\x10'
-    # ex int
-    result += b'\x02\x81\x04\x80\x00\x00\xee'
-    # unsupported class
-    result += b'\xff\x8f\x01\x00'
-    # bool 
-    result += b'\x01\x01\xff'
-    # octet string
-    result += b'\x04\x0bhello world'
-    # sequence with primitives
-    result += b'\x30\x0b\x01\x01\xff\x02\x01\x20\x02\x81\x02\x01\x00'
-    return result
-
-if __name__ == "__main__":
-    main()
