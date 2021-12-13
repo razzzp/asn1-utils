@@ -1,4 +1,5 @@
 from typing import List
+from asn1.utils import *
 
 class ASN1Root:
     def __init__(self, type : str) -> None:
@@ -9,13 +10,6 @@ class ASN1Root:
         # to be overriden
         raise NotImplementedError(f'as_asn1_str() is not implemented in {self.__class__}')
 
-    @staticmethod
-    def _indent_str(indent):
-        result = ''
-        for i in range (indent):
-            result +='\t'
-        return result
-
 
 class ASN1Object (ASN1Root):
     def __init__(self, type : str, value = None) -> None:
@@ -23,7 +17,7 @@ class ASN1Object (ASN1Root):
         self.value = value
 
     def as_asn1_str(self, indent = 0) -> str:
-        return f'{self._indent_str(indent)}{self.type} ::= {self.value}'
+        return f'{indent_str(indent)}{self.type} ::= {self.value}'
     
 class ASN1Sequence (ASN1Root):
     def __init__(self) -> None:
@@ -31,8 +25,8 @@ class ASN1Sequence (ASN1Root):
         self.children : List[ASN1Root] = []
 
     def as_asn1_str(self, indent = 0) -> str:
-        result = f'{self._indent_str(indent)}{self.type} :: = {{\n'
+        result = f'{indent_str(indent)}{self.type} :: = {{\n'
         for child in self.children:
             result += child.as_asn1_str(indent+1) + '\n'
-        result += self._indent_str(indent) + '}'
+        result += indent_str(indent) + '}'
         return result

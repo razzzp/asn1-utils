@@ -1,8 +1,9 @@
 from io import StringIO
 from sys import stdout
 from enum import Enum
-from typing import List
+from typing import List, TextIO
 from asn1.dicts import *
+from asn1.utils import *
 
 class TokenType (Enum):
     IDENTIFIER = 0,
@@ -10,6 +11,7 @@ class TokenType (Enum):
     SEPARATOR = 2,
     OPERATOR = 3,
     LITERAL = 4,
+    COMMENT = 5
 
 class Token:
     def __init__(self, value : str, type : TokenType, name : str = '') -> None:
@@ -17,6 +19,14 @@ class Token:
         self.type = type
         self.name = name
         pass
+
+    def pretty_print(self, out : TextIO, indent : int = 0):
+        out.write(indent_str(indent) + '{\n')
+        out.write(indent_str(indent+1) + f'name : {self.name}\n')
+        out.write(indent_str(indent+1) + f'type : {self.type}\n')
+        out.write(indent_str(indent+1) + f'value : {self.value}\n')
+        out.write(indent_str(indent) + '}\n')
+
 
 class Lexer:
     # maybe this will be used
@@ -140,7 +150,7 @@ class ASN1Lexer (Lexer):
                     cur_lexeme =''
                 elif in_singleline_comment and cur_char == '\n':
                     in_singleline_comment = False
-                    result.append(cur_lexeme + cur_char)
+                    result.append(cur_lexeme)
                     cur_lexeme =''
                 else:
                     # still in comment continue
@@ -166,7 +176,7 @@ class ASN1Lexer (Lexer):
             elif cur_char in MultiCharSymbol:
                 combined = cur_lexeme + cur_char
                 if combined[-2:] == '--':
-                    # for case cur_lexeme = 'blabla-'
+                    # for case cur_lexeme = 'blabla-'        
                     prev_lexeme = cur_lexeme[0:-1]
                     if prev_lexeme != '':
                         result.append(prev_lexeme)
@@ -176,7 +186,9 @@ class ASN1Lexer (Lexer):
                     pass
                 elif combined == '/*':
                     # append all except last char
-                    result.append(cur_lexeme[0:-1])
+                    prev_lexeme = cur_lexeme[0:-1]
+                    if prev_lexeme != '':
+                        result.append(prev_lexeme)
                     # start comment
                     in_multiline_comment = True
                     cur_lexeme = '/*'
@@ -206,7 +218,43 @@ class ASN1Lexer (Lexer):
         result = []
         for (i, lexeme) in enumerate(lexemes):
             # TODO
-            result.append(lexeme)
+            if lexeme in Keywords:
+                result.append(Token(lexeme, TokenType.IDENTIFIER))
+            elif lexeme in Separators:
+                result.append(Token(lexeme, TokenType.SEPARATOR))
+            elif lexeme in Operators:
+                result.append(Token(lexeme, TokenType.OPERATOR))
+            elif self._is_comment(lexeme):
+                result.append(Token(lexeme, TokenType.COMMENT))
+            elif self._is_valid_identifier(lexeme):
+                # should be an identifier
+                result.append(Token(lexeme, TokenType.IDENTIFIER))
+            elif self._is_literal(lexeme):
+                result.append(Token(lexeme, TokenType.LITERAL))
+            else:
+                raise ValueError('unknown element: ' + lexeme)
             pass
         return result
 
+
+    def _is_comment(self, lexeme : str):
+        first2chars = lexeme[0:2]
+        if first2chars == '/*' or first2chars == '--':
+            return True
+        return False
+
+    def _is_valid_identifier(self, lexeme : str):
+        if lexeme[0].isnumeric():
+            return False
+        if self._contains_invalidchars(lexeme):
+            return False
+        return True
+
+    def _contains_invalidchars(self, lexeme : str):
+        # TODO implement invalid identifier character checking
+        return False
+
+    def _is_literal(self, lexeme : str):
+        return True
+
+    

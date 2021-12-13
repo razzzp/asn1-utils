@@ -1,7 +1,7 @@
 import sys, os
 sys.path.append(os.path.join(os.getcwd(),'src'))
 
-
+from asn1.parsers import ASN1Parser
 from asn1 import lexers
 from io import StringIO
 
@@ -165,8 +165,24 @@ VideotexString
 VisibleString
 WITH
     """)
-    print('out:\n')
+    #print('out:\n')
     lexer = lexers.ASN1Lexer()
-    result = lexer.tokenize(istream)
-    print(result)
+
+    lexemes = lexer._get_lexemes_v2(istream)
+
+    with open('./out/test_lexemes.txt','w') as f:
+        for lexeme in lexemes:
+            f.write(lexeme + '\n')
+
+    tokens = lexer._get_tokens(lexemes)
+    
+    with open('./out/test_tokens.txt','w') as f:
+        for token in tokens:
+            token.pretty_print(f)
+
+    asn1schema = ASN1Parser().parse(tokens)
+
+    with open('./out/test_schema.txt', 'w') as f:
+        asn1schema.prettyprint(f)
+
 

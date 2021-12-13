@@ -1,3 +1,54 @@
+MultiCharSymbol = {
+    '.' : 'dot',
+    ':' : 'colon',
+    '[' : 'start_square_brace',
+    ']' : 'end_square_brace',
+    '*' : 'asterik',
+    '/' : 'forward_slash',
+    '-' : 'hypen'
+    # </ and /> not supported
+}
+
+MultiCharSymbolLexemes ={
+    '..' : 'double_dot',
+    '....' : 'triple_dot',
+    '[[' : 'double_start_square_brace',
+    ']]' : 'double_end_square_brace',
+    '/*' : 'start comment',
+    '*/' : 'end_comment',
+    '--' : 'single line comment',
+    '::=' : 'assignment'
+}
+
+SingleCharSymbol = {
+    '=' : 'equals',
+    '\'' : 'quote',
+    '\"' : 'double_quotes',
+    ',' : 'comma',
+    # hypens can be in identifiers
+    #'-' : 'hypen',
+    #'/' : 'slash',
+    #':' : 'colon',
+    ';' : 'semi_colon',
+    '@' : 'at',
+    '|' : 'pipe',
+    '!' : 'exclamation',
+    '^' : 'caret',
+     '(' : 'start_brace',
+    '{' : 'start_curly_brace',
+    #'[' : 'start_square_brace',
+    '<' : 'less_than',
+     ')' : 'end_brace',
+    '}' : 'end_curly_brace',
+    #']' : 'end_square_brace',
+    '>' : 'greater_than',
+}
+
+WhiteSpace = {
+    ' ' : 'space',
+    '\n' : 'newline',
+    '\t' : 'tab'
+}
 
 Keywords = {
     'ABSENT',
@@ -93,52 +144,27 @@ Keywords = {
     'WITH',   
 }
 
-MultiCharSymbol = {
-    '.' : 'dot',
-    ':' : 'colon',
-    '[' : 'start_square_brace',
-    ']' : 'end_square_brace',
-    '*' : 'asterik',
-    '/' : 'forward_slash',
-    '-' : 'hypen'
-    # </ and /> not supported
+Separators = {
+     ',',
+     '(',
+     '[',
+     '{',
+     ')',
+     ']',
+     '}',
+     ';'
 }
 
-MultiCharSymbolLexemes ={
-    '..' : 'double_dot',
-    '[[' : 'double_start_square_brace',
-    ']]' : 'double_end_square_brace',
-    '/*' : 'start comment',
-    '*/' : 'end_comment',
-    '--' : 'single line comment'
-}
-
-SingleCharSymbol = {
-    '=' : 'equals',
-    '\'' : 'quote',
-    '\"' : 'double_quotes',
-    ',' : 'comma',
-    # hypens can be in identifiers
-    #'-' : 'hypen',
-    #'/' : 'slash',
-    #':' : 'colon',
-    ';' : 'semi_colon',
-    '@' : 'at',
-    '|' : 'pipe',
-    '!' : 'exclamation',
-    '^' : 'caret',
-     '(' : 'start_brace',
-    '{' : 'start_curly_brace',
-    #'[' : 'start_square_brace',
-    '<' : 'less_than',
-     ')' : 'end_brace',
-    '}' : 'end_curly_brace',
-    #']' : 'end_square_brace',
-    '>' : 'greater_than',
-}
-
-WhiteSpace = {
-    ' ' : 'space',
-    '\n' : 'newline',
-    '\t' : 'tab'
+Operators = {
+    '=',
+    '+',
+    '|',
+    '!',
+    '<',
+    '>',
+    '@',
+    '.',
+    '*',
+    '^',
+    '::='
 }
