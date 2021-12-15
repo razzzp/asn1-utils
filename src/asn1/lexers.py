@@ -14,17 +14,19 @@ class TokenType (Enum):
     COMMENT = 5
 
 class Token:
-    def __init__(self, value : str, type : TokenType, name : str = '') -> None:
+    def __init__(self, value : str, type : TokenType, line_num = 0) -> None:
         self.value = value
         self.type = type
-        self.name = name
+        self.name = ''
+        self.line_num = line_num
         pass
 
     def pretty_print(self, out : TextIO, indent : int = 0):
         out.write(indent_str(indent) + '{\n')
-        out.write(indent_str(indent+1) + f'name : {self.name}\n')
+        #out.write(indent_str(indent+1) + f'name : {self.name}\n')
         out.write(indent_str(indent+1) + f'type : {self.type}\n')
         out.write(indent_str(indent+1) + f'value : {self.value}\n')
+        out.write(indent_str(indent+1) + f'line : {self.line_num}\n')
         out.write(indent_str(indent) + '}\n')
 
 
@@ -154,14 +156,12 @@ class ASN1Lexer (Lexer):
                     cur_lexeme =''
                 else:
                     # still in comment continue
-                    cur_lexeme += cur_char
-                continue
-            if cur_char in WhiteSpace:
+                    cur_lexeme += cur_char      
+            elif cur_char in WhiteSpace:
                 # if whitespace, whatever is in cur_lexeme is added if not empty
                 if cur_lexeme != '':
                     result.append(cur_lexeme)
-                    cur_lexeme = ''
-                pass
+                    cur_lexeme = ''          
             elif cur_char in SingleCharSymbol:
                 if cur_char == '=' and cur_lexeme == '::':
                     result.append('::=')
@@ -171,8 +171,7 @@ class ASN1Lexer (Lexer):
                         result.append(cur_lexeme)
                         cur_lexeme = ''
                     # also append the Single Char Symbol
-                    result.append(cur_char)
-                pass
+                    result.append(cur_char)              
             elif cur_char in MultiCharSymbol:
                 combined = cur_lexeme + cur_char
                 if combined[-2:] == '--':
@@ -211,26 +210,34 @@ class ASN1Lexer (Lexer):
                 cur_lexeme += cur_char
             else:
                 raise ValueError(f'unsupported char found at {istream.tell()}: \'{cur_char}\'')
+            #
+            # keep newlines for line number tracking
+            if cur_char == '\n':
+                result.append('\n')
             prev_char = cur_char
         return result
 
     def _get_tokens(self, lexemes : List[str]) -> List[Token]:
         result = []
+        line_counter = 0
         for (i, lexeme) in enumerate(lexemes):
             # TODO
             if lexeme in Keywords:
-                result.append(Token(lexeme, TokenType.IDENTIFIER))
+                result.append(Token(lexeme, TokenType.IDENTIFIER, line_counter))
             elif lexeme in Separators:
-                result.append(Token(lexeme, TokenType.SEPARATOR))
+                result.append(Token(lexeme, TokenType.SEPARATOR, line_counter))
             elif lexeme in Operators:
-                result.append(Token(lexeme, TokenType.OPERATOR))
+                result.append(Token(lexeme, TokenType.OPERATOR, line_counter))
             elif self._is_comment(lexeme):
-                result.append(Token(lexeme, TokenType.COMMENT))
+                result.append(Token(lexeme, TokenType.COMMENT, line_counter))
+            elif lexeme == '\n':
+                # ignore newlines, but increment line_counter
+                line_counter += 1
             elif self._is_valid_identifier(lexeme):
                 # should be an identifier
-                result.append(Token(lexeme, TokenType.IDENTIFIER))
+                result.append(Token(lexeme, TokenType.IDENTIFIER, line_counter))
             elif self._is_literal(lexeme):
-                result.append(Token(lexeme, TokenType.LITERAL))
+                result.append(Token(lexeme, TokenType.LITERAL, line_counter))
             else:
                 raise ValueError('unknown element: ' + lexeme)
             pass
