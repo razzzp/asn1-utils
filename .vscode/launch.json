@@ -8,16 +8,29 @@
             "name": "Python: Run Main",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/src/asn1/main.py",
-            "console": "integratedTerminal"
+            // "program": "${workspaceFolder}/src/asn1/main.py",
+            "module": "asn1",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/src",
         },
         {
             "name": "Python: Run Tests",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/src/tests/run_tests.py",
-            "cwd": "${workspaceFolder}",
+            // "program": "asn1/tests/run_tests.py",
+            "cwd": "${workspaceFolder}/src",
+            "console": "integratedTerminal",
+            "module": "asn1.tests",
+            "args": ["-v"]
+        },
+        {
+            "name": "Python: Run Current Module",
+            "type": "python",
+            "request": "launch",
+            "module": "${command:extension.commandvariable.file.relativeDirDots}.${fileBasenameNoExtension}",
+            "cwd": "${workspaceFolder}/src",
             "console": "integratedTerminal"
+
         }
     ]
 }

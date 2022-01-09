@@ -1,12 +1,11 @@
-import sys, os
-sys.path.append(os.path.join(os.getcwd(),'src'))
-
+import os
 from asn1.parsers import ASN1Parser
-from asn1 import lexers
+from asn1.lexers import *
 from io import StringIO
 
+output_dir = "./asn1/tests/out"
 
-def run():
+def test():
     istream = StringIO("""
     PEDefinitions {joint-iso-itu-t(2) international-organizations(23) simalliance(143) euicc-profile(1) spec-version(1) version-two(2)}
     DEFINITIONS
@@ -72,117 +71,118 @@ def run():
     END
     """)
 
-    keywords = StringIO("""
-     ABSENT
-ABSTRACT-SYNTAX
-ALL
-APPLICATION
-AUTOMATIC
-BEGIN
-BIT
-BMPString
-BOOLEAN
-BY
-CHARACTER
-CHOICE
-CLASS
-COMPONENT
-COMPONENTS
-CONSTRAINED
-CONTAINING
-DATE
-DATE-TIME
-DEFAULT
-DEFINITIONS
-DURATION
-EMBEDDED
-ENCODED
-ENCODING-CONTROL
-END
-ENUMERATED
-EXCEPT
-EXPLICIT
-EXPORTS
-EXTENSIBILITY
-EXTERNAL
-FALSE
-FROM
-GeneralizedTime
-GeneralString
-GraphicString
-IA5String
-IDENTIFIER
-IMPLICIT
-IMPLIED
-IMPORTS
-INCLUDES
-INSTANCE
-INSTRUCTIONS
-INTEGER
-INTERSECTION
-ISO646String
-MAX
-MIN
-MINUS-INFINITY
-NOT-A-NUMBER
-NULL
-NumericString
-OBJECT
-ObjectDescriptor
-OCTET
-OF
-OID-IRI
-OPTIONAL
-PATTERN
-PDV
-PLUS-INFINITY
-PRESENT
-PrintableString
-PRIVATE
-REAL
-RELATIVE-OID
-RELATIVE-OID-IRI
-SEQUENCE
-SET
-SETTINGS
-SIZE
-STRING
-SYNTAX
-T61String
-TAGS
-TeletexString
-TIME
-TIME-OF-DAY
-TRUE
-TYPE-IDENTIFIER
-UNION
-UNIQUE
-UNIVERSAL
-UniversalString
-UTCTime
-UTF8String
-VideotexString
-VisibleString
-WITH
-    """)
+   
     #print('out:\n')
-    lexer = lexers.ASN1Lexer()
+    lexer = ASN1Lexer()
 
     lexemes = lexer._get_lexemes_v2(istream)
 
-    with open('./out/test_lexemes.txt','w') as f:
+    with open(os.path.join(output_dir, 'test_lexemes.txt'),'w') as f:
         for lexeme in lexemes:
             f.write(lexeme + '\n')
 
     tokens = lexer._get_tokens(lexemes)
     
-    with open('./out/test_tokens.txt','w') as f:
+    with open(os.path.join(output_dir, 'test_tokens.txt'),'w') as f:
         for token in tokens:
             token.pretty_print(f)
 
     asn1schema = ASN1Parser().parse(tokens)
 
-    with open('./out/test_schema.txt', 'w') as f:
+    with open(os.path.join(output_dir, 'test_schema.txt'), 'w') as f:
         asn1schema.prettyprint(f)
 
 
+# keywords = StringIO("""
+#      ABSENT
+# ABSTRACT-SYNTAX
+# ALL
+# APPLICATION
+# AUTOMATIC
+# BEGIN
+# BIT
+# BMPString
+# BOOLEAN
+# BY
+# CHARACTER
+# CHOICE
+# CLASS
+# COMPONENT
+# COMPONENTS
+# CONSTRAINED
+# CONTAINING
+# DATE
+# DATE-TIME
+# DEFAULT
+# DEFINITIONS
+# DURATION
+# EMBEDDED
+# ENCODED
+# ENCODING-CONTROL
+# END
+# ENUMERATED
+# EXCEPT
+# EXPLICIT
+# EXPORTS
+# EXTENSIBILITY
+# EXTERNAL
+# FALSE
+# FROM
+# GeneralizedTime
+# GeneralString
+# GraphicString
+# IA5String
+# IDENTIFIER
+# IMPLICIT
+# IMPLIED
+# IMPORTS
+# INCLUDES
+# INSTANCE
+# INSTRUCTIONS
+# INTEGER
+# INTERSECTION
+# ISO646String
+# MAX
+# MIN
+# MINUS-INFINITY
+# NOT-A-NUMBER
+# NULL
+# NumericString
+# OBJECT
+# ObjectDescriptor
+# OCTET
+# OF
+# OID-IRI
+# OPTIONAL
+# PATTERN
+# PDV
+# PLUS-INFINITY
+# PRESENT
+# PrintableString
+# PRIVATE
+# REAL
+# RELATIVE-OID
+# RELATIVE-OID-IRI
+# SEQUENCE
+# SET
+# SETTINGS
+# SIZE
+# STRING
+# SYNTAX
+# T61String
+# TAGS
+# TeletexString
+# TIME
+# TIME-OF-DAY
+# TRUE
+# TYPE-IDENTIFIER
+# UNION
+# UNIQUE
+# UNIVERSAL
+# UniversalString
+# UTCTime
+# UTF8String
+# VideotexString
+# VisibleString
+# WITH
+#     """)

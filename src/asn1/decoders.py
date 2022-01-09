@@ -1,5 +1,5 @@
 from os import error
-from asn1 import *
+from asn1.objects import *
 import struct
 
 # enums ----------

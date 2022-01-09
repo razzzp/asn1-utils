@@ -6,6 +6,7 @@ from asn1.dicts import *
 from asn1.utils import *
 
 class TokenType (Enum):
+    UNDEFINED = -1,
     IDENTIFIER = 0,
     KEYWORD = 1,
     SEPARATOR = 2,
@@ -14,7 +15,7 @@ class TokenType (Enum):
     COMMENT = 5
 
 class Token:
-    def __init__(self, value : str, type : TokenType, line_num = 0) -> None:
+    def __init__(self, value : str, type : TokenType = TokenType.UNDEFINED, line_num = 0) -> None:
         self.value = value
         self.type = type
         self.name = ''

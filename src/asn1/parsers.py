@@ -1,9 +1,8 @@
 from enum import Enum
 from typing import Dict, List, Tuple
 from asn1.lexers import Token
-from asn1.asn1_schema import ASN1Schema, ASN1SchemaAssignmentList, ASN1SchemaValue
+from asn1.schema import ASN1Schema, ASN1SchemaAssignmentList, ASN1SchemaValue, ASN1SchemaDefinitions
 from asn1.dicts import *
-from asn1.asn1_schema import ASN1SchemaDefinitions
 
 class _ParserState(Enum):
     INITIAL = 0,
@@ -117,3 +116,9 @@ class ASN1DefinitionsParser:
                 _raise_unexpectedtoken(token)
         return result
 
+    class ASN1AssignmentsListParser:
+        def parse(self, tokens : List[Token]) -> ASN1SchemaValue:
+            result = ASN1SchemaAssignmentList()
+
+
+            pass

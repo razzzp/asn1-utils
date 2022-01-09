@@ -1,11 +1,11 @@
-import decoders
+from asn1.decoders import *
 
 def main():
     print("ASN1 Utils - DER Decoder")
     #
     testBytes = getTestData()
     #
-    parser = decoders.DERSequenceDecoder()
+    parser = DERSequenceDecoder()
     result = parser.decode(len(testBytes), testBytes)
     print(f'\nfinal result:')
     #
